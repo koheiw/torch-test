@@ -1,8 +1,14 @@
 # https://mlverse.github.io/luz/articles/examples/text-classification.html
 library(torch)
 library(luz)
+library(quanteda)
 
-vocab_size <- 20000 # maximum number of items in the vocabulary
+
+toks <- tokens(quanteda.textmodels::data_corpus_moviereviews) %>% 
+  tokens_remove(stopwords("en")) %>% 
+  tokens_trim(min_termfreq = 5)
+
+vocab_size <- length(types(toks)) # maximum number of items in the vocabulary
 output_length <- 500 # padding and truncation length.
 embedding_dim <- 128 # size of the embedding vectors
 
@@ -10,12 +16,12 @@ movie_dataset <- dataset(
   
   name = "movie_dataset",
   
-  initialize = function(toks) {
-    self$x <- as.tensor(toks)
-    self$y <- torch_tensor(toks$sentiment)
+  initialize = function(data) {
+    self$x <- as.tensor(data, output_length)
+    self$y <- torch_tensor(data$sentiment)
   },
   .getitem = function(i) {
-    list(x = self$x[i, ], y = self$y[i])
+    list(x = self$x[i], y = self$y[i])
   },
   .length = function() {
     self$y$size()[[1]]
@@ -23,9 +29,8 @@ movie_dataset <- dataset(
   
 )
 
-train_ds <- movie_dataset(toks)
-#train_ds <- movie_dataset(toks, split = "train")
-#test_ds <- movie_dataset(toks, "./imdb", split = "test")
+train_ds <- movie_dataset(head(toks, 1500))
+test_ds <- movie_dataset(tail(toks, 500))
 
 # ----------------------
 

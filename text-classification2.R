@@ -14,9 +14,10 @@ Matrix.tokens <- function(x) {
 
 corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
 
-toks <- tokens(corp) %>% 
-  tokens_remove(stopwords("en"), min_nchar = 2) %>% 
-  tokens_trim(min_termfreq = 5) %>% 
+toks <- tokens(corp, remove_punct = TRUE) %>% 
+  tokens_tolower() %>% 
+  #tokens_remove(stopwords("en"), min_nchar = 2) %>% 
+  tokens_trim(min_termfreq = 20000, termfreq_type = "rank") %>% 
   tokens_select(endpos = 500)
 
 vocab_size <- length(types(toks)) # maximum number of items in the vocabulary

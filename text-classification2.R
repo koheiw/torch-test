@@ -28,12 +28,12 @@ movie_dataset <- dataset(
   name = "movie_dataset",
   
   initialize = function(data) {
-    self$x <- Matrix.tokens(toks)
-    self$y <- as.numeric(data$sentiment)
+    self$x <- Matrix.tokens(data)
+    self$y <- data$sentiment
   },
   .getitem = function(i) {
     list(x = as.integer(self$x[i,]) + 1L, 
-         y = self$y[i])
+         y = as.numeric(self$y[i]) - 1)
   },
   .length = function() {
     length(self$y)
@@ -99,3 +99,5 @@ fitted_model <- model %>%
 
 fitted_model %>% evaluate(test_ds)
 
+pred <- predict(fitted_model, test_ds)
+hist(as.numeric(pred))

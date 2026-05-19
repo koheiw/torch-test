@@ -16,10 +16,10 @@ corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
 
 toks <- tokens(corp) %>% 
   tokens_remove(stopwords("en"), min_nchar = 2) %>% 
-  tokens_trim(min_termfreq = 5)
+  tokens_trim(min_termfreq = 5) %>% 
+  tokens_select(endpos = 500)
 
 vocab_size <- length(types(toks)) # maximum number of items in the vocabulary
-output_length <- 500 # padding and truncation length.
 embedding_dim <- 128 # size of the embedding vectors
 
 movie_dataset <- dataset(

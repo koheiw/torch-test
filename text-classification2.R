@@ -1,8 +1,8 @@
 # https://mlverse.github.io/luz/articles/examples/text-classification.html
+source("settings.R")
 library(torch)
 library(luz)
 library(quanteda)
-
 
 Matrix.tokens <- function(x) {
   lis <- unclass(x)
@@ -12,8 +12,10 @@ Matrix.tokens <- function(x) {
                        repr = "R")
 }
 
-toks <- tokens(quanteda.textmodels::data_corpus_moviereviews) %>% 
-  tokens_remove(stopwords("en")) %>% 
+corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
+
+toks <- tokens(corp) %>% 
+  tokens_remove(stopwords("en"), min_nchar = 2) %>% 
   tokens_trim(min_termfreq = 5)
 
 vocab_size <- length(types(toks)) # maximum number of items in the vocabulary
@@ -38,8 +40,8 @@ movie_dataset <- dataset(
   
 )
 
-train_ds <- movie_dataset(head(toks, 1500))
-test_ds <- movie_dataset(tail(toks, 500))
+train_ds <- movie_dataset(tokens_subset(toks, split == "train"))
+test_ds <- movie_dataset(tokens_subset(toks, split == "test"))
 
 # ----------------------
 

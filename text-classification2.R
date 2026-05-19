@@ -4,6 +4,14 @@ library(luz)
 library(quanteda)
 
 
+Matrix.tokens <- function(x) {
+  lis <- unclass(x)
+  Matrix::sparseMatrix(j = unlist(sapply(lengths(lis), seq_len)), 
+                       p = c(0, cumsum(lengths(lis))), 
+                       x = unlist(lis, use.names = FALSE),
+                       repr = "R")
+}
+
 toks <- tokens(quanteda.textmodels::data_corpus_moviereviews) %>% 
   tokens_remove(stopwords("en")) %>% 
   tokens_trim(min_termfreq = 5)
@@ -17,14 +25,15 @@ movie_dataset <- dataset(
   name = "movie_dataset",
   
   initialize = function(data) {
-    self$x <- as.tensor(data, output_length)
-    self$y <- torch_tensor(data$sentiment)
+    self$x <- Matrix.tokens(toks)
+    self$y <- as.numeric(data$sentiment)
   },
   .getitem = function(i) {
-    list(x = self$x[i], y = self$y[i])
+    list(x = as.integer(self$x[i,]) + 1L, 
+         y = self$y[i])
   },
   .length = function() {
-    self$y$size()[[1]]
+    length(self$y)
   }
   
 )

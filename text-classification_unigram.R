@@ -1,4 +1,5 @@
 # https://mlverse.github.io/luz/articles/examples/text-classification.html
+source("settings.R")
 library(torch)
 library(tok)
 library(luz)
@@ -77,8 +78,8 @@ imdb_dataset <- dataset(
     }
 )
 
-train_ds <- imdb_dataset(output_length, vocab_size,  "./imdb", split = "train")
-test_ds <- imdb_dataset(output_length, vocab_size,  "./imdb", split = "test")
+train_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "train")
+test_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "test")
 
 # ----------------------
 

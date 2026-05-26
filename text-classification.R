@@ -1,7 +1,9 @@
 # https://mlverse.github.io/luz/articles/examples/text-classification.html
+source("settings.R")
 library(torch)
 library(tok)
 library(luz)
+
 
 vocab_size <- 20000 # maximum number of items in the vocabulary
 output_length <- 500 # padding and truncation length.
@@ -35,14 +37,16 @@ imdb_dataset <- dataset(
         )
         
         # train a tokenizer on the train data (if one doesn't exist yet)
-        tokenizer_path <- file.path(root, glue::glue("tokenizer-{vocab_size}.json"))
+        tokenizer_path <- file.path(root, glue::glue("tokenizer_bpe-{vocab_size}.json"))
 
         if (!file.exists(tokenizer_path)) {
-            self$tok <- tok::tokenizer$new(tok::model_bpe$new())
+            #self$tok <- tok::tokenizer$new(tok::model_bpe$new())
+            self$tok <- tokenizer$new(tok::model_unigram$new())
             self$tok$pre_tokenizer <- tok::pre_tokenizer_whitespace$new()
             
             files <- list.files(file.path(fpath, "train"), recursive = TRUE, full.names = TRUE)
-            self$tok$train(files, tok::trainer_bpe$new(vocab_size = vocab_size))
+            #self$tok$train(files, tok::trainer_bpe$new(vocab_size = vocab_size))
+            self$tok$train(files, tok::trainer_unigram$new(vocab_size = vocab_size, unk_token = "[UNK]"))
             
             self$tok$save(tokenizer_path)  
         } else {
@@ -75,8 +79,8 @@ imdb_dataset <- dataset(
     }
 )
 
-train_ds <- imdb_dataset(output_length, vocab_size,  "./imdb", split = "train")
-test_ds <- imdb_dataset(output_length, vocab_size,  "./imdb", split = "test")
+train_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "train")
+test_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "test")
 
 # ----------------------
 

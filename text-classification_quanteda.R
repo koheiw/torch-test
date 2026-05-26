@@ -1,39 +1,44 @@
 # https://mlverse.github.io/luz/articles/examples/text-classification.html
+# https://keras.io/examples/nlp/text_classification_from_scratch/
 source("settings.R")
 library(torch)
 library(luz)
 library(quanteda)
 
-Matrix.tokens <- function(x) {
-  lis <- unclass(x)
-  Matrix::sparseMatrix(j = unlist(sapply(lengths(lis), seq_len)), 
-                       p = c(0, cumsum(lengths(lis))), 
-                       x = unlist(lis, use.names = FALSE),
-                       repr = "R")
-}
+# Matrix.tokens <- function(x, length = 500) {
+#   x <- tokens_select(x, endpos = length)
+#   lis <- unclass(x)
+#   Matrix::sparseMatrix(j = unlist(sapply(lengths(lis), seq_len)), 
+#                        p = c(0, cumsum(lengths(lis))), 
+#                        x = unlist(lis, use.names = FALSE),
+#                        dims = c(length(lis), length),
+#                        repr = "R")
+# }
 
+set.seed(1234)
 corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
+#corp <- corpus_sample(corp)
 
 toks <- tokens(corp, remove_punct = TRUE) %>% 
   tokens_tolower() %>% 
   #tokens_remove(stopwords("en"), min_nchar = 2) %>% 
-  tokens_trim(min_termfreq = 20000, termfreq_type = "rank") %>% 
-  tokens_select(endpos = 500)
+  tokens_trim(min_termfreq = 20000, termfreq_type = "rank")
 
 vocab_size <- length(types(toks)) # maximum number of items in the vocabulary
+output_length <- 500 # padding and truncation length.
 embedding_dim <- 128 # size of the embedding vectors
 
 movie_dataset <- dataset(
   
   name = "movie_dataset",
-  
-  initialize = function(data) {
-    self$x <- Matrix.tokens(data)
-    self$y <- data$sentiment
+
+  initialize = function(data, output_length) {
+    self$x <- as.Matrix(data, output_length)
+    self$y <- as.numeric(docvars(data, "sentiment")) - 1
   },
   .getitem = function(i) {
     list(x = as.integer(self$x[i,]) + 1L, 
-         y = as.numeric(self$y[i]) - 1)
+         y = self$y[i])
   },
   .length = function() {
     length(self$y)
@@ -41,8 +46,10 @@ movie_dataset <- dataset(
   
 )
 
-train_ds <- movie_dataset(tokens_subset(toks, split == "train"))
-test_ds <- movie_dataset(tokens_subset(toks, split == "test"))
+train_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "train"), 
+                          output_length)
+test_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "test"), 
+                         output_length)
 
 # ----------------------
 
@@ -58,7 +65,8 @@ model <- nn_module(
             nn_relu(),
             nn_conv1d(128, 128, kernel_size = 7, stride = 3, padding = "valid"),
             nn_relu(),
-            nn_adaptive_max_pool2d(c(128, 1)) # reduces the length dimension
+            #nn_adaptive_max_pool2d(c(128, 1)) # reduces the length dimension
+            nn_adaptive_max_pool1d(1) # reduces the length dimension
         )
         
         self$classifier <- nn_sequential(
@@ -75,7 +83,8 @@ model <- nn_module(
             self$convs() %>% 
             self$classifier()
         # we drop the last so we get (B) instead of (B, 1)
-        out$squeeze(2)
+        #out$squeeze(2)
+        out$squeeze(-1)
     }
 )
 
@@ -98,6 +107,9 @@ fitted_model <- model %>%
 # ----------------------
 
 fitted_model %>% evaluate(test_ds)
+
+pred0 <- predict(fitted_model, train_ds)
+hist(as.numeric(pred0))
 
 pred <- predict(fitted_model, test_ds)
 hist(as.numeric(pred))

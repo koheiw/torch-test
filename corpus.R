@@ -12,6 +12,7 @@ match <- stri_match_first_regex(file, "([a-z]+)\\/([a-z]+)")
 dat$split <- match[,2]
 dat$sentiment <- factor(match[,3], levels = c("neg", "pos"))
 dat <- subset(dat, !is.na(sentiment))
+dat <- dat[order(dat$split, dat$sentiment, decreasing = TRUE),]
 
 corp <- corpus(dat)
 saveRDS(corp, file.path(DIR_DATA, "corpus_imdb.RDS"))

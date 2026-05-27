@@ -8,7 +8,7 @@ txt <- corp %>%
   stringr::str_replace_all("<br />", " ") %>% 
   stringr::str_remove_all("[:punct:]")
 
-tok <- tokenizer$from_file(file.path(DIR_RAW, "/tokenizer_unigram-20000.json"))
+tok <- tokenizer$from_file(file.path(DIR_RAW, "/tokenizer-unigram-20000.json"))
 lis <- lapply(txt, function(x) tok$encode(x)$ids)
 
 #(tok <- tokenizer$new(model_bpe$new()))

@@ -22,13 +22,13 @@ set.seed(1234)
 corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
 #corp <- corpus_sample(corp)
 
-txt <- corp %>% 
+corp[] <- corp %>% 
   stringr::str_to_lower() %>% 
   stringr::str_replace_all("<br />", " ") %>% 
   stringr::str_remove_all("[:punct:]")
 
 tok <- tok::tokenizer$from_file(file.path(DIR_RAW, "/tokenizer-unigram-20000.json"))
-lis <- lapply(txt, function(x) tok$encode(x)$ids)
+lis <- lapply(corp, function(x) tok$encode(x)$ids)
 dat <- docvars(corp)
 
 

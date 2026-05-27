@@ -5,26 +5,14 @@ library(torch)
 library(luz)
 library(quanteda)
 
-# Matrix.tokens <- function(x, length = 500) {
-#   x <- tokens_select(x, endpos = length)
-#   lis <- unclass(x)
-#   Matrix::sparseMatrix(j = unlist(sapply(lengths(lis), seq_len)), 
-#                        p = c(0, cumsum(lengths(lis))), 
-#                        x = unlist(lis, use.names = FALSE),
-#                        dims = c(length(lis), length),
-#                        repr = "R")
-# }
-
-set.seed(1234)
 corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
-#corp <- corpus_sample(corp)
 
 toks <- tokens(corp, remove_punct = TRUE) %>% 
   tokens_tolower() %>% 
   #tokens_remove(stopwords("en"), min_nchar = 2) %>% 
   tokens_trim(min_termfreq = 20000, termfreq_type = "rank")
 
-vocab_size <- length(types(toks)) # maximum number of items in the vocabulary
+vocab_size <- length(types(toks)) + 1 # maximum number of items in the vocabulary
 output_length <- 500 # padding and truncation length.
 embedding_dim <- 128 # size of the embedding vectors
 

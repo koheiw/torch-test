@@ -37,16 +37,14 @@ imdb_dataset <- dataset(
         )
         
         # train a tokenizer on the train data (if one doesn't exist yet)
-        tokenizer_path <- file.path(root, glue::glue("tokenizer_bpe-{vocab_size}.json"))
+        tokenizer_path <- file.path(root, glue::glue("tokenizer-bpe-{vocab_size}.json"))
 
         if (!file.exists(tokenizer_path)) {
-            #self$tok <- tok::tokenizer$new(tok::model_bpe$new())
-            self$tok <- tokenizer$new(tok::model_unigram$new())
+            self$tok <- tok::tokenizer$new(tok::model_bpe$new())
             self$tok$pre_tokenizer <- tok::pre_tokenizer_whitespace$new()
             
             files <- list.files(file.path(fpath, "train"), recursive = TRUE, full.names = TRUE)
-            #self$tok$train(files, tok::trainer_bpe$new(vocab_size = vocab_size))
-            self$tok$train(files, tok::trainer_unigram$new(vocab_size = vocab_size, unk_token = "[UNK]"))
+            self$tok$train(files, tok::trainer_bpe$new(vocab_size = vocab_size))
             
             self$tok$save(tokenizer_path)  
         } else {

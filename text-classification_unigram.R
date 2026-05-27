@@ -36,7 +36,7 @@ imdb_dataset <- dataset(
         )
         
         # train a tokenizer on the train data (if one doesn't exist yet)
-        tokenizer_path <- file.path(root, glue::glue("tokenizer-unigram_{vocab_size}.json"))
+        tokenizer_path <- file.path(root, glue::glue("tokenizer-unigram-{vocab_size}.json"))
 
         if (!file.exists(tokenizer_path)) {
             #self$tok <- tok::tokenizer$new(tok::model_bpe$new())
@@ -56,6 +56,7 @@ imdb_dataset <- dataset(
         self$tok$enable_truncation(max_length = output_length)
     },
     .getitem = function(i) {
+      browser()
         item <- self$data[i,]
         
         # takes item i, reads the file content into a char string

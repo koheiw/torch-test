@@ -9,7 +9,6 @@ t3 <- t1$view(c(1, 1))
 t3$shape
 
 torch_tensor(matrix(1:9, ncol = 3))
-torch_tensor(mat)
 
 torch_tensor(array(1:24, dim = c(4, 3, 2)))
 

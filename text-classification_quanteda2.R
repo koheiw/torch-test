@@ -51,11 +51,11 @@ xtoks <- as.tokens_xptr(toks)
 train_ds <- movie_dataset(tokens_subset(xtoks, split == "train"), output_length)
 test_ds <- movie_dataset(tokens_subset(xtoks, split == "test"), output_length)
 
-train_ds$.length()
-train_ds$.getitem(2:3)
+#train_ds$.length()
+#train_ds$.getitem(2:3)
 
-train_dl <- dataloader(train_ds, num_workers = 2, batch_size = 100, shuffle = TRUE)
-test_dl <- dataloader(train_ds, num_workers = 2, batch_size = 100, shuffle = TRUE)
+#train_dl <- dataloader(train_ds, num_workers = 0, batch_size = 100, shuffle = TRUE)
+#test_dl <- dataloader(train_ds, num_workers = 0, batch_size = 100, shuffle = TRUE)
 
 # ----------------------
 
@@ -114,3 +114,4 @@ fitted_model <- model %>%
 # ----------------------
 
 fitted_model %>% evaluate(test_ds)
+#fitted_model %>% evaluate(test_dl)

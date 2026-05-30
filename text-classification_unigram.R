@@ -56,7 +56,7 @@ imdb_dataset <- dataset(
         self$tok$enable_truncation(max_length = output_length)
     },
     .getitem = function(i) {
-      browser()
+
         item <- self$data[i,]
         
         # takes item i, reads the file content into a char string
@@ -81,6 +81,9 @@ imdb_dataset <- dataset(
 
 train_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "train")
 test_ds <- imdb_dataset(output_length, vocab_size, DIR_RAW, split = "test")
+
+train_dl <- dataloader(train_ds, batch_size = 128)
+test_dl <- dataloader(train_ds, batch_size = 128)
 
 # ----------------------
 
@@ -131,9 +134,10 @@ fitted_model <- model %>%
         metrics = luz_metric_binary_accuracy_with_logits()
     ) %>% 
     set_hparams(vocab_size = vocab_size, embedding_dim = embedding_dim) %>% 
-    fit(train_ds, epochs = 3)
+    #fit(train_ds, epochs = 3)
+    fit(train_dl, epochs = 3)
 
 # ----------------------
 
-fitted_model %>% evaluate(test_ds)
-
+#fitted_model %>% evaluate(test_ds)
+fitted_model %>% evaluate(test_dl)

@@ -3,6 +3,7 @@
 source("settings.R")
 library(torch)
 library(luz)
+# devtools::install_github("quanteda/quanteda", ref = "dev-as.Matrix")
 library(quanteda)
 
 corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
@@ -34,10 +35,9 @@ movie_dataset <- dataset(
   
 )
 
-train_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "train"), 
-                          output_length)
-test_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "test"), 
-                         output_length)
+xtoks <- as.tokens_xptr(toks)
+train_ds <- movie_dataset(tokens_subset(xtoks, split == "train"), output_length)
+test_ds <- movie_dataset(tokens_subset(xtoks, split == "test"), output_length)
 
 # ----------------------
 
@@ -95,9 +95,3 @@ fitted_model <- model %>%
 # ----------------------
 
 fitted_model %>% evaluate(test_ds)
-
-pred0 <- predict(fitted_model, train_ds)
-hist(as.numeric(pred0))
-
-pred <- predict(fitted_model, test_ds)
-hist(as.numeric(pred))

@@ -4,10 +4,13 @@
 source("settings.R")
 library(torch)
 library(luz)
+# devtools::install_github("quanteda/quanteda", ref = "dev-as.tensor")
 library(quanteda)
 
-corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
 
+corp <- readRDS(file.path(DIR_DATA, "corpus_imdb.RDS"))
+corp$sentiment <- as.numeric(docvars(corp, "sentiment")) - 1
+  
 toks <- tokens(corp, remove_punct = TRUE) %>% 
   tokens_tolower() %>% 
   #tokens_remove(stopwords("en"), min_nchar = 2) %>% 
@@ -17,61 +20,42 @@ vocab_size <- length(types(toks)) + 1 # maximum number of items in the vocabular
 output_length <- 500 # padding and truncation length.
 embedding_dim <- 128 # size of the embedding vectors
 
-movie_dataset0 <- dataset(
-  name = "movie_dataset0",
-  
-  initialize = function(data, output_length) {
-    self$x <- as.Matrix(data, output_length)
-    self$y <- as.numeric(docvars(data, "sentiment")) - 1
-  },
-  .getitem = function(i) {
-    list(x = as.integer(self$x[i,]) + 1L, 
-         y = self$y[i])
-  },
-  .length = function() {
-    length(self$y)
-  }
-  
-)
-
 movie_dataset <- dataset(
   name = "movie_dataset",
 
   initialize = function(data, output_length) {
-    self$x <- as.Matrix(data, output_length)
-    self$y <- as.numeric(docvars(data, "sentiment")) - 1
+    self$toks <- data
+    self$dvars <- docvars(data)
   },
   .getitem = function(i) {
-    #list(x = as.integer(self$x[i,]) + 1L,
-    #    y = self$y[i])
-    list(#x = torch_tensor(as.matrix(self$x[i,,drop = TRUE] + 1), dtype = torch_int32()),
-         x = torch_tensor(self$x[i,] + 1, dtype = torch_int32()),
-         y = self$y[i])
+    list(
+       x = as.matrix(self$toks, output_length, extract = i) + 1L,
+       y = self$dvars$sentiment[i]
+    )
   },
   .getbatch = function(i) {
-    list(#x = as.matrix(self$x[i,,drop = FALSE]) + 1L,
-         x = torch_tensor(as.matrix(self$x[i,,drop = FALSE] + 1), dtype = torch_int32()),
-         y = torch_tensor(self$y[i]))
+    list(
+       x = as.matrix(self$toks, output_length, extract = i, drop = FALSE) + 1L,
+       y = self$dvars$sentiment[i]
+       # alternatively
+       #x = as.tensor(self$toks, output_length, extract = i),
+       #y = torch_tensor(self$dvars$sentiment[i])
+    )
   },
   .length = function() {
-    length(self$y)
+    ndoc(self$toks)
   }
-  
 )
 
-#train_ds0 <- movie_dataset0(tokens_subset(toks, recompile = FALSE, split == "train"), 
-#                          output_length)
-train_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "train"), 
-                          output_length)
-test_ds <- movie_dataset(tokens_subset(toks, recompile = FALSE, split == "test"), 
-                         output_length)
+xtoks <- as.tokens_xptr(toks)
+train_ds <- movie_dataset(tokens_subset(xtoks, split == "train"), output_length)
+test_ds <- movie_dataset(tokens_subset(xtoks, split == "test"), output_length)
 
-#train_ds0$.getitem(2)
-train_ds$.getitem(2)
-train_ds$.getbatch(1:2)
+train_ds$.length()
+train_ds$.getitem(2:3)
 
-train_dl <- dataloader(train_ds, num_workers = 0, batch_size = 500)
-test_dl <- dataloader(train_ds, num_workers = 0, batch_size = 500)
+train_dl <- dataloader(train_ds, num_workers = 2, batch_size = 100, shuffle = TRUE)
+test_dl <- dataloader(train_ds, num_workers = 2, batch_size = 100, shuffle = TRUE)
 
 # ----------------------
 
@@ -124,9 +108,9 @@ fitted_model <- model %>%
         metrics = luz_metric_binary_accuracy_with_logits()
     ) %>% 
     set_hparams(vocab_size = vocab_size, embedding_dim = embedding_dim) %>% 
-    #fit(train_ds, epochs = 3)
-    fit(train_dl, epochs = 3)
+    fit(train_ds, epochs = 3)
+    #fit(train_dl, epochs = 3)
 
 # ----------------------
 
-fitted_model %>% evaluate(test_dl)
+fitted_model %>% evaluate(test_ds)
